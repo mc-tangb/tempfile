@@ -1,0 +1,366 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+	<script type="text/javascript">
+	</script>
+    <title>宁波智慧消防</title>
+    <link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css"/>
+    <script src="http://cache.amap.com/lbs/static/es5.min.js"></script>
+    <script src="http://webapi.amap.com/maps?v=1.3&key=de552b55e772415c1ea1617b678504c9"></script>
+    <script type="text/javascript" src="http://cache.amap.com/lbs/static/addToolbar.js"></script>
+    <script type="text/javascript" src="../js/jsonData/json.js"></script>
+	<style type="text/css">
+        .info {
+            border: solid 1px silver;
+        }
+        div.info-top {
+            position: relative;
+            background: none repeat scroll 0 0 #F9F9F9;
+            border-bottom: 1px solid #CCC;
+            border-radius: 5px 5px 0 0;
+        }
+        div.info-top div {
+            display: inline-block;
+            color: #333333;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 31px;
+            padding: 0 10px;
+        }
+        div.info-top img {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            transition-duration: 0.25s;
+        }
+        div.info-top img:hover {
+            box-shadow: 0px 0px 5px #000;
+        }
+        div.info-middle {
+            font-size: 12px;
+            padding: 6px;
+            line-height: 20px;
+        }
+        div.info-bottom {
+            height: 0px;
+            width: 100%;
+            clear: both;
+            text-align: center;
+        }
+        div.info-bottom img {
+            position: relative;
+            z-index: 104;
+        }
+        span {
+            margin-left: 5px;
+            font-size: 11px;
+        }
+        .info-middle img {
+            float: left;
+            margin-right: 6px;
+        }
+		.custom-content-label{
+			color : "black"
+		}
+    </style>
+</head>
+<body>
+<script type="text/javascript">
+	
+</script>
+<div id="container"></div>
+
+<script>
+(function(){
+	AMap.Marker.prototype.setData = function(data){
+		this.jsonData = data;
+	};
+	AMap.Marker.prototype.getData = function(data){
+		return this.jsonData;
+	};
+	String.prototype.trim = function(){
+		 return this.replace(/(^\s*)|(\s*$)/g,""); 
+	}
+}());
+var map = new AMap.Map('container', {
+	resizeEnable: true,
+	zoom:18,
+	center: [121.607299,29.921007]
+});
+
+/*
+	功能:为所给主体描点
+	param:
+		map:高德地图对象
+		pointArr:包含lng,lat值得对象的数组
+		images:{  对象显示良好的和有错误的图标(传入图片路径)
+			correct:'',
+			error:''
+		}
+		
+*/
+
+
+function DrawMarker(map,pointArr,images){
+	this._init(map,pointArr,images);
+}
+DrawMarker.prototype = {
+	/*
+		_init:初始化方法
+	*/
+	_init:function(map,pointArr,images){
+		this.__map__ = map;
+		this.__pointArr__ = pointArr;
+		this.__images__ = images;
+		this.__markers__ = [];
+		//this._drawMap();
+	},
+	/*
+		_draw:描点
+	*/
+	_draw:function(){
+		for(var i=0;i<this.__pointArr__.length;i++){
+			var marker = new AMap.Marker({
+				icon: this.__pointArr__[i]["报警状态"] == 0?this.__images__.error:this.__images__.correct,
+				position: [this.__pointArr__[i]["经度"], this.__pointArr__[i]["纬度"]]
+			});
+			marker.setMap(this.__map__);
+			marker.setData(this.__pointArr__[i]);
+			this.__markers__.push(marker);
+		}
+	},
+	/*
+		_onclick:点击事件
+	*/
+	_onclick:function(func){
+		this.__markers__.forEach(function(marker){
+			marker.on("click",function(e){
+				typeof func === "function"?func(e):"";
+			})
+		});
+	},
+	draw:function(){
+		this._draw();
+	},
+	getMap:function(){
+		return this.__map__;
+	},
+	onclick:function(func){
+		this._onclick(func);
+	}
+}
+/*
+var drawer = new DrawMarker(map,data,{"error":"../images/warn.png","correct":"../images/pic1.png"});
+drawer.draw();
+
+drawer.onclick(function(e){
+	
+	var data = e.target.getData(),
+		point = e.target.getPosition();
+	var info = [];
+	info.push("<table>");
+	var index = 0;
+	for(var opt in data){
+		if(index%2 == 0){
+			info.push("<tr><td>"+opt+":</td><td>"+data[opt]+"</td>");
+		}else{
+			info.push("<td>"+opt+":</td><td>"+data[opt]+"</td></tr>");
+		}
+		index ++;
+	}
+	info.push("</table>");
+	var title = '设备状态信息';
+	var infoWindow = new AMap.InfoWindow({
+		isCustom: true,  //使用自定义窗体
+		content: createInfoWindow(title, info.join("")),
+		offset: new AMap.Pixel(16, -175)
+	});
+	infoWindow.open(drawer.getMap(),point);
+});
+*/
+
+var builds = [{
+    "编号":"1",
+	"门楼编号":"1",
+	"名称":"烟感",
+	"经度":"121.608485",
+	"纬度":"29.919723",
+	"数量":100,
+	"报警数量":2,
+	"类型":"烟感",
+    "热区坐标":""	
+}]
+//建筑物marker
+var buildingMarker = new DrawMarker(map,builds,{"error":"../images/warn.png","correct":"../images/pic1.png"});
+buildingMarker.draw();
+buildingMarker.onclick(function(e){
+	var data = e.target.getData(),
+		point = e.target.getPosition();
+	title = '消防地图门楼<span style="font-size:11px;color:#F00;">烟感总量:318，报警数：5</span>',
+	content = [];
+	content.push("地址：北京市朝阳区阜通东大街6号院");
+	content.push("电话：010-64733333");
+	var strImgMap = "<img src='../images/楼层2.jpg' width='400' height='300' border='0' usemap='#Map'>"+
+		"<map name='Map' id='Map'>"+
+		"<area shape='poly' coords='118,90,104,113,114,161,201,153,198,85' href='#' />"+
+		"<area shape='poly' coords='207,90,213,150,262,149,346,144,337,82' href='#' />"+
+		"</map>"
+	content.push(strImgMap);
+	var infoWindow = new AMap.InfoWindow({
+		isCustom: true,  //使用自定义窗体
+		content: createInfoWindow(title, content.join("")),
+		offset: new AMap.Pixel(16, -56)
+	});
+	infoWindow.open(e.target.getMap(),point);
+});
+//构建自定义信息窗体
+function createInfoWindow(title, content) {
+	var info = document.createElement("div");
+	info.className = "info";
+
+	//可以通过下面的方式修改自定义窗体的宽高
+	//info.style.width = "400px";
+	// 定义顶部标题
+	info.style.width = "420px";
+	info.style.height = "320px";
+	var top = document.createElement("div");
+	var titleD = document.createElement("div");
+	var closeX = document.createElement("img");
+	top.className = "info-top";
+	titleD.innerHTML = title;
+	closeX.src = "http://webapi.amap.com/images/close2.gif";
+	closeX.onclick = closeInfoWindow;
+
+	top.appendChild(titleD);
+	top.appendChild(closeX);
+	info.appendChild(top);
+
+	// 定义中部内容
+	var middle = document.createElement("div");
+	middle.className = "info-middle";
+	middle.style.backgroundColor = 'white';
+	middle.innerHTML = content;
+	info.appendChild(middle);
+
+	// 定义底部内容
+	var bottom = document.createElement("div");
+	bottom.className = "info-bottom";
+	bottom.style.position = 'relative';
+	bottom.style.top = '0px';
+	bottom.style.margin = '0 auto';
+	var sharp = document.createElement("img");
+	sharp.src = "http://webapi.amap.com/images/sharp.png";
+	bottom.appendChild(sharp);
+	info.appendChild(bottom);
+	
+	return info;
+}
+
+//关闭信息窗体
+function closeInfoWindow() {
+	map.clearInfoWindow();
+}
+
+/*
+	功能:画区域
+	参数:
+		map:当前地图对象,
+		objectArr:对象数组数组
+		plyOption:参考PolygonOptions
+*/
+function DrawPolygon(map,objectArr,plyOption){
+	this._init(map,objectArr,plyOption);
+}
+DrawPolygon.prototype = {
+	_init:function(map,objectArr,plyOption){
+		this.__map__ = map;
+		this.__pointArr__ = objectArr; //放置点数组
+		(typeof(objectArr[0].data) == "object")?"":this.__pointArr__= this._parseData(objectArr);//如果pointArr[0]不是数组则解析
+		this.__plyOption__ = plyOption;
+		this.__plyArr__ =  new Array();//用于放置polygon对象
+	},
+	_parseData:function(objectArr){
+		for(var j=0;j<objectArr.length;j++){
+			var tmp = objectArr[j].data.split(";");
+			var pointArr = [];
+			for(var i=0;i<tmp.length;i++){
+				if(tmp[i].trim() == "" || tmp == null)continue;
+				var t = tmp[i].split(",");
+				pointArr.push(t);
+			}
+			objectArr[j].data = pointArr;
+		}
+		return objectArr;
+	},
+	_draw:function(){
+		for(var i=0;i<this.__pointArr__.length;i++){
+			var  polygon = new AMap.Polygon(this.__plyOption__);
+			polygon.setPath(this.__pointArr__[i].data);
+			this.__plyArr__.push(polygon);
+			polygon.setMap(this.__map__);
+			var center = this.__pointArr__[i].center;
+			var tmpArr = center.split(",");
+			var marker = new AMap.Marker({ //添加自定义点标记
+				map: map,
+				position: [tmpArr[0],tmpArr[1]], //基点位置
+				offset: new AMap.Pixel(-20, -20), //相对于基点的偏移位置
+				draggable: true,  //是否可拖动
+				icon:new AMap.Icon({image:""}),
+				content: '<div class="custom-content-label">'+this.__pointArr__[i].name+'</div>'   //自定义点标记覆盖物内容
+			});
+			this.__plyArr__.push(polygon);
+			this.__plyArr__.push(marker);
+		}
+	},
+	draw:function(){
+		this._draw();
+	},
+	hide:function(){
+		for(var i=0;i<this.__plyArr__.length;i++){
+			this.__plyArr__[i].hide();
+		}
+	},
+	show:function(){
+		for(var i=0;i<this.__plyArr__.length;i++){
+			this.__plyArr__[i].show();
+		}
+	},
+	getPolygons:function(){
+		return this.__plyArr__;
+	},
+	onclick:function(func){
+		this.__plyArr__.forEach(function(ply){
+			ply.on("click",function(e){
+				typeof func === "function"?func(e):"";
+			})
+		});
+	}
+}
+
+var plyPointArr = [{"name":"A11","center":"121.608485,29.919723","data":"121.607191,29.920976;121.60755,29.91772;121.60967,29.918534;121.609383,29.92157"},
+{"name":"A12","center":"121.608233,29.922854","data":"121.60694,29.924857;121.607227,29.921195;121.609527,29.921758;121.609239,29.924888"},
+{"name":"A13","center":"121.608018,29.926766","data":"121.606724,29.929114;121.60694,29.925045;121.609275,29.924982;121.608916,29.928081"},
+{"name":"A14","center":"121.610892,29.926109","data":"121.60906,29.928644;121.609563,29.924826;121.612473,29.923198;121.614162,29.92517"},
+{"name":"A15","center":"121.610892,29.923386","data":"121.609419,29.924701;121.609778,29.920318;121.612401,29.923042"}
+]
+
+var plys = new DrawPolygon(map,plyPointArr,{strokeColor: "#FF33FF", //线颜色
+        strokeOpacity: 0.2, //线透明度
+        strokeWeight: 3,    //线宽
+        fillColor: "#5891fc", //填充色
+        fillOpacity: 0.35//填充透明度
+});
+plys.draw();
+
+setInterval(function(){
+	plys.hide();
+},1000);
+setInterval(function(){
+	plys.show();
+},1500);
+</script>
+</body>
+</html>
